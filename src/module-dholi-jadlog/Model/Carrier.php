@@ -23,6 +23,8 @@ use Dholi\Jadlog\Lib\GetModal\Api;
 use Dholi\Jadlog\Lib\GetModal\Calculo;
 use Dholi\Jadlog\Lib\GetModal\Response;
 use Dholi\Jadlog\Lib\GetModal\Volume;
+use Dholi\Jadlog\Lib\Jadlog\ConsultarPedido;
+use Dholi\Jadlog\Lib\Jadlog\TrackingBeanService;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory;
@@ -84,6 +86,25 @@ class Carrier extends AbstractCarrier implements CarrierInterface {
 		$this->trackErrorFactory = $trackErrorFactory;
 		$this->trackStatusFactory = $trackStatusFactory;
 		$this->logger = $logger;
+	}
+
+	public function collectRates(RateRequest $request) {
+		$this->toZip = $request->getDestPostcode();
+		if (null == $this->toZip) {
+			return $this->_result;
+		}
+		$this->toZip = str_replace(array('-', '.'), '', trim($this->toZip));
+		$this->toZip = str_replace('-', '', $this->toZip);
+		if (!preg_match('/^([0-9]{8})$/', $this->toZip)) {
+			return $this->_result;
+		}
+
+		if ($this->check($request) === false) {
+			return $this->_result;
+		}
+		$this->getQuotes();
+
+		return $this->_result;
 	}
 
 	private function check(RateRequest $request) {
@@ -189,59 +210,6 @@ class Carrier extends AbstractCarrier implements CarrierInterface {
 		$this->_freeMethod = $this->getConfigData('servico_gratuito');
 	}
 
-	public function getCode($type, $code = null) {
-		$codes = [
-			'service' => [
-				'jadlog_package' => __('Tabela Rodoviária'),
-				'jadlog_com' => __('Tabela Expressa')
-			],
-			'front' => [
-				'jadlog_package' => __('Rodoviário'),
-				'jadlog_com' => __('Expresso')
-			]
-		];
-
-		if (!isset($codes[$type])) {
-			return false;
-		} elseif (null === $code) {
-			return $codes[$type];
-		}
-
-		if (!isset($codes[$type][$code])) {
-			return false;
-		} else {
-			return $codes[$type][$code];
-		}
-	}
-
-	public function collectRates(RateRequest $request) {
-		$this->toZip = $request->getDestPostcode();
-		if (null == $this->toZip) {
-			return $this->_result;
-		}
-		$this->toZip = str_replace(array('-', '.'), '', trim($this->toZip));
-		$this->toZip = str_replace('-', '', $this->toZip);
-		if (!preg_match('/^([0-9]{8})$/', $this->toZip)) {
-			return $this->_result;
-		}
-
-		if ($this->check($request) === false) {
-			return $this->_result;
-		}
-		$this->getQuotes();
-
-		return $this->_result;
-	}
-
-	public function getAllowedMethods() {
-		$allowedMethods = explode(',', $this->getConfigData('servico_codigo'));
-		$methods = [];
-		foreach ($allowedMethods as $k) {
-			$methods[$k] = $this->getCode('service', $k);
-		}
-		return $methods;
-	}
-
 	private function getQuotes() {
 		$data = ['transportadora_codigos_servicos' => $this->getConfigData('servico_codigo'),
 			'cep_origem' => $this->fromZip,
@@ -280,6 +248,29 @@ class Carrier extends AbstractCarrier implements CarrierInterface {
 		foreach ($response->listServices() as $s) {
 			$this->appendService($s);
 		}
+	}
+
+	private function consultar($data) {
+		$request = array(
+			'uri' => '/cotacao/consultar',
+			'data' => $data
+		);
+
+		$response = null;
+		$gmAccessKey = $this->getConfigData('gm_key');
+		$gmAccessToken = $this->getConfigData('gm_token');
+
+		try {
+			$api = new Api($gmAccessKey, $gmAccessToken);
+			$text = $api->post($request);
+
+			$response = Response::getInstance()->prepare($text);
+		} catch (Exception $e) {
+			$response = Response::getInstance()->prepare(array('errors' => array($e->getMessage())));
+			$this->logger->critical($e->getMessage());
+		}
+
+		return $response;
 	}
 
 	private function appendService(Calculo $calculo) {
@@ -324,27 +315,38 @@ class Carrier extends AbstractCarrier implements CarrierInterface {
 		$this->_result->append($rate);
 	}
 
-	private function consultar($data) {
-		$request = array(
-			'uri' => '/cotacao/consultar',
-			'data' => $data
-		);
+	public function getCode($type, $code = null) {
+		$codes = [
+			'service' => [
+				'jadlog_package' => __('Tabela Rodoviária'),
+				'jadlog_com' => __('Tabela Expressa')
+			],
+			'front' => [
+				'jadlog_package' => __('Rodoviário'),
+				'jadlog_com' => __('Expresso')
+			]
+		];
 
-		$response = null;
-		$gmAccessKey = $this->getConfigData('gm_key');
-		$gmAccessToken = $this->getConfigData('gm_token');
-
-		try {
-			$api = new Api($gmAccessKey, $gmAccessToken);
-			$text = $api->post($request);
-
-			$response = Response::getInstance()->prepare($text);
-		} catch (Exception $e) {
-			$response = Response::getInstance()->prepare(array('errors' => array($e->getMessage())));
-			$this->logger->critical($e->getMessage());
+		if (!isset($codes[$type])) {
+			return false;
+		} elseif (null === $code) {
+			return $codes[$type];
 		}
 
-		return $response;
+		if (!isset($codes[$type][$code])) {
+			return false;
+		} else {
+			return $codes[$type][$code];
+		}
+	}
+
+	public function getAllowedMethods() {
+		$allowedMethods = explode(',', $this->getConfigData('servico_codigo'));
+		$methods = [];
+		foreach ($allowedMethods as $k) {
+			$methods[$k] = $this->getCode('service', $k);
+		}
+		return $methods;
 	}
 
 	public function isTrackingAvailable() {
@@ -352,10 +354,65 @@ class Carrier extends AbstractCarrier implements CarrierInterface {
 	}
 
 	public function getTrackingInfo($tracking) {
-		return $this->_getTracking($tracking);
+		return $this->searchJadlogEvents($tracking);
 	}
 
-	private function _getTracking($trackingNumber) {
+	private function searchJadlogEvents($trackingNumber) {
+		$user = trim($this->getConfigData('jl_cnpj'));
+		$pwd = trim($this->getConfigData('jl_password'));
 
+		if (empty($user) || empty($pwd)) {
+			throw new RuntimeException('Convênio com a Jadlog não encontrado.');
+		}
+		$trackingNumber = preg_replace("@0+@", '', $trackingNumber);
+		$parameters = new ConsultarPedido($user, $pwd, $trackingNumber);
+
+		$client = new TrackingBeanService(array('trace' => 0, 'connection_timeout' => 20));
+		$consultarPedidoResponse = $client->consultarPedido($parameters);
+
+		$response = $consultarPedidoResponse->xmlToObject();
+
+		if ($response->hasError()) {
+			$error = $this->trackErrorFactory->create();
+			$error->setTracking($trackingNumber);
+			$error->setCarrier($this->_code);
+			$error->setCarrierTitle($this->getConfigData('title'));
+			$error->setErrorMessage($response->getError());
+
+			return $error;
+		} else {
+			$dataEntrega = str_replace('/', '-', $response->getDataHoraEntrega());
+
+			$track = array(
+				'deliverydate' => date('d-m-Y', strtotime($dataEntrega)),
+				'deliverytime' => date('H:i', strtotime($dataEntrega)),
+				'status' => htmlentities($response->getStatus()),
+				'progressdetail' => $this->eventsAsString($response->listEvents()),
+			);
+
+			$tracking = $this->trackStatusFactory->create();
+			$tracking->setTracking($trackingNumber);
+			$tracking->setCarrier($this->_code);
+			$tracking->setCarrierTitle($this->getConfigData('title'));
+			$tracking->addData($track);
+
+			return $tracking;
+		}
+	}
+
+	private function eventsAsString($events) {
+		$detail = [];
+		foreach ($events as $event) {
+			$dataEntrega = str_replace('/', '-', $event->getDataHoraEvento());
+
+			$detail[] = [
+				'deliverydate' => date('d-m-Y', strtotime($dataEntrega)),
+				'deliverytime' => date('H:i', strtotime($dataEntrega)),
+				'deliverylocation' => $event->getObservacao(),
+				'activity' => $event->getDescricao(),
+			];
+		}
+
+		return $detail;
 	}
 }

@@ -24,6 +24,14 @@ class Evento {
 
 	private $observacao;
 
+	private $statusList = ['TRANSFERENCIA' => 'Sua encomenda foi transferida para outra unidade Jadlog.',
+		'ENTRADA' => 'Sua encomenda deu entrada em uma unidade Jadlog.',
+		'EM ROTA' => 'Fique atento(a)! Estamos a caminho para entregar sua encomenda.',
+		'EMISSAO' => 'Uma solicitação de emissão foi gerada na unidade Jadlog.',
+		'ENTREGUE' => 'Sua encomenda foi entregue.',
+		'ANALISE' => 'Ops...! Sua encomenda está em análise com nossa equipe. Em breve você receberá mais detalhes.'
+	];
+
 	public function __construct($codigo, $dataHoraEvento, $descricao, $observacao) {
 		$this->codigo = trim($codigo);
 		$this->dataHoraEvento = trim($dataHoraEvento);
@@ -40,8 +48,8 @@ class Evento {
 	}
 
 	public function getDescricao() {
-		if (array_key_exists($this->descricao, self::$statusList)) {
-			return self::$statusList[$this->descricao];
+		if (array_key_exists($this->descricao, $this->statusList)) {
+			return $this->statusList[$this->descricao];
 		}
 		return $this->descricao;
 	}

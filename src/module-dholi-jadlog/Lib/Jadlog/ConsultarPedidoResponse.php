@@ -92,8 +92,8 @@ class ConsultarPedidoResponse {
 	}
 
 	public function getStatus() {
-		if (array_key_exists($this->status, self::$statusList)) {
-			return self::$statusList[$this->status];
+		if (array_key_exists($this->status, $this->statusList)) {
+			return $this->statusList[$this->status];
 		}
 
 		return $this->status;

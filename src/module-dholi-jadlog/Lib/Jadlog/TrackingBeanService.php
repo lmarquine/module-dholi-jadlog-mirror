@@ -17,10 +17,10 @@ namespace Dholi\Jadlog\Lib\Jadlog;
 class TrackingBeanService extends \SoapClient {
 
 	private static $classmap = array(
-		'Consultar' => '\Dholi\Jadlog\Lib\Jadlog\Consultar',
-		'ConsultarResponse' => '\Dholi\Jadlog\Lib\Jadlog\ConsultarResponse',
-		'ConsultarPedido' => '\Dholi\Jadlog\Lib\Jadlog\ConsultarPedido',
-		'ConsultarPedidoResponse' => '\Dholi\Jadlog\Lib\Jadlog\ConsultarPedidoResponse');
+		'consultar' => '\Dholi\Jadlog\Lib\Jadlog\Consultar',
+		'consultarResponse' => '\Dholi\Jadlog\Lib\Jadlog\ConsultarResponse',
+		'consultarPedido' => '\Dholi\Jadlog\Lib\Jadlog\ConsultarPedido',
+		'consultarPedidoResponse' => '\Dholi\Jadlog\Lib\Jadlog\ConsultarPedidoResponse');
 
 	public function __construct(array $options = array(), $wsdl = 'http://www.jadlog.com.br:8080/JadlogEdiWs/services/TrackingBean?wsdl') {
 		foreach (self::$classmap as $key => $value) {
