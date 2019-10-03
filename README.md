@@ -1,1 +1,1 @@
-# Integração Frente com Jadlog + Getmodal para Magento 2 Open Source
+# Integração Frete com Jadlog + Getmodal para Magento 2 Open Source
