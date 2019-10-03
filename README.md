@@ -1,1 +1,1 @@
-# Integração Frete com Jadlog + Getmodal para Magento 2 Open Source
+# Cálculo de Frete com Jadlog + Getmodal para Magento 2 Open Source
