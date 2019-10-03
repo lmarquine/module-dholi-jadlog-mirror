@@ -1,1 +1,1 @@
-# Integração Frente com Correios para Magento 2 Open Source
+# Integração Frente com Jadlog + Getmodal para Magento 2 Open Source
