@@ -144,7 +144,6 @@ class Carrier extends AbstractCarrier implements CarrierInterface {
 
 		$widthAttr = $this->getConfigData('width');
 		$heightAttr = $this->getConfigData('height');
-		$lengthAttr = $this->getConfigData('length');
 		$weightAttr = $this->getConfigData('weight');
 
 		$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
@@ -158,14 +157,10 @@ class Carrier extends AbstractCarrier implements CarrierInterface {
 				foreach ($item->getChildren() as $child) {
 					if (!$child->getProduct()->isVirtual()) {
 						$product = $objectManager->create('Magento\Catalog\Model\Product')->load($child->getProductId());
-
 						$preco = ($item->getPrice() - $item->getDiscountAmount());
-
-						// FIXME: rever
-						$parentIds = null;//Mage::getModel('catalog/product_type_grouped')->getParentIdsByChild($productId);
+						$parentIds = $objectManager->create('Magento\GroupedProduct\Model\Product\Type\Grouped')->getParentIdsByChild($product->getId());
 						if (!$parentIds) {
-							// FIXME: rever
-							$parentIds = null;//Mage::getModel('catalog/product_type_configurable')->getParentIdsByChild($productId);
+							$parentIds = $objectManager->create('Magento\ConfigurableProduct\Model\Product\Type\Configurable')->getParentIdsByChild($product->getId());
 
 							if ($parentIds) {
 								$parentProd = $objectManager->create('Magento\Catalog\Model\Product')->load($parentIds[0]);
