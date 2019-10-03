@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+	<default>
+		<carriers>
+			<dholi_jadlog>
+				<model>Dholi\Jadlog\Model\Carrier</model>
+				<active>0</active>
+				<title>Jadlog</title>
+				<showmethod>0</showmethod>
+				<mensagem_prazo_entrega><![CDATA[%s - Até %d dia(s) úteis]]></mensagem_prazo_entrega>
+				<width>volume_largura</width>
+				<height>volume_altura</height>
+				<length>volume_comprimento</length>
+				<weight>weight</weight>
+				<sort_order>16</sort_order>
+			</dholi_jadlog>
+		</carriers>
+	</default>
+</config>
