@@ -30,7 +30,7 @@ class Response {
 		if (isset($text['errors'])) {
 			$this->errors = $text['errors'];
 		}
-		if (isset($text['response'])) {
+		if (isset($text['response']) && $text['response']['resposta']) {
 			$calculos = $text['response']['resposta'][0]['calculos'];
 
 			if ($calculos && is_array($calculos)) {
