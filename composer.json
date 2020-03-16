@@ -1,7 +1,8 @@
 {
   "name": "dholi/module-dholi-jadlog",
   "type": "magento2-component",
-  "description": "Frete com Jadlog + Getmodal para Magento 2 | dholi.dev",
+  "description": "Frete com Jadlog + Getmodal para Magento 2",
+  "version": "dev-master",
   "homepage": "https://www.dholi.dev/projetos/jadlog",
   "keywords": [
     "magento",
